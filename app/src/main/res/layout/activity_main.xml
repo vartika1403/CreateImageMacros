@@ -37,7 +37,7 @@
         app:layout_constraintStart_toEndOf="@id/select_image_button"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <ImageView
+    <com.example.createimagemacros.view.CustomImageMacros
         android:id="@+id/marocs_image"
         android:src ="@drawable/ic_launcher_background"
         android:layout_width="wrap_content"
@@ -52,6 +52,7 @@
     <EditText
         android:id="@+id/marocs_text"
         android:text="vartika sharma"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -60,6 +61,5 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/edit_text_button"
         />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
