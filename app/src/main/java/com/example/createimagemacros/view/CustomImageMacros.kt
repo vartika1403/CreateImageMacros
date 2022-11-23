@@ -112,7 +112,7 @@ class CustomImageMacros : AppCompatImageView, View.OnTouchListener,
             maxTrans = 0f
         }
         if (trans < minTrans) { // negative x or y translation (down or to the right)
-            return -trans + minTrans
+            return trans + minTrans
         }
         if (trans > maxTrans) { // positive x or y translation (up or to the left)
             return -trans + maxTrans
