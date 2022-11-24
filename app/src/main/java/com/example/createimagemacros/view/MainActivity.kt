@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.widget.EditText
@@ -18,13 +17,12 @@ import com.example.createimagemacros.addStrictMode
 import com.example.createimagemacros.changeBackGroundColor
 import com.example.createimagemacros.databinding.ActivityMainBinding
 import com.example.createimagemacros.getBitmapFromView
-import com.example.createimagemacros.getImageToShare
+import com.example.createimagemacros.getImageUrlToShare
 
-class MainActivity : AppCompatActivity(),View.OnTouchListener {
+class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val SELECT_PICTURE = 200
-    private var xDelta:Float = 0.0F
-    private var yDelta:Float = 0.0F
+
     private var scaleGestureDetector: ScaleGestureDetector? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,8 +34,9 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
         
         val resultLauncher = registerForActivityResult()
 
-        binding.marocsImage.setOnTouchListener(this)
         scaleGestureDetector = ScaleGestureDetector(this, ScalingView(binding.marocsImage))
+
+        binding.marocsImage.setOnTouchListener(ViewTouchListener(scaleGestureDetector))
 
         binding.selectImageButton.setOnClickListener { imageChooser(resultLauncher) }
 
@@ -52,10 +51,11 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
 
         binding.shareButton.setOnClickListener {
             val bitmap = getBitmapFromView(binding.macros)
-            shareImageAndText(bitmap)
+            shareMacrosImage(bitmap)
         }
     }
 
+    // added text listener on text changes
     private fun addTextChangedListener(editText: EditText) {
         editText.addTextChangedListener( object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
     }
 
     private fun addTouchListener() {
-        binding.marocsText.setOnTouchListener(this)
+        binding.marocsText.setOnTouchListener(ViewTouchListener(scaleGestureDetector))
         binding.marocsText.clearFocus()
     }
 
@@ -94,23 +94,19 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
     }
 
     // add sharing component for the macrosImage
-    private fun shareImageAndText(bitmap: Bitmap) {
-        val uri = getImageToShare(bitmap, this)
+    private fun shareMacrosImage(bitmap: Bitmap) {
+        val uri = getImageUrlToShare(bitmap, this)
         val intent = Intent(Intent.ACTION_SEND)
 
         // putting uri of image to be shared
         intent.putExtra(Intent.EXTRA_STREAM, uri)
-
-        // adding text to share
         intent.putExtra(Intent.EXTRA_TEXT, "Sharing Image")
-
-        // Add subject Here
         intent.putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
 
         // setting type to image
         intent.type = "image/png"
 
-        val chooser = Intent.createChooser(intent, "Chooser Title")
+        val chooser = Intent.createChooser(intent, "Share")
         chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         startActivity(chooser)
     }
@@ -125,27 +121,5 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
                    }
                }
            }
-    }
-
-    override fun onTouch(view: View?, event: MotionEvent?): Boolean {
-        if (event != null) {
-            scaleGestureDetector?.onTouchEvent(event)
-        }
-        val x = event?.rawX?.toInt()
-        val y = event?.rawY?.toInt()
-
-        when(event?.action) {
-            MotionEvent.ACTION_DOWN -> {
-                if (x != null)
-                    xDelta = view?.x?.minus(x) ?: xDelta
-                if (y != null)
-                    yDelta = view?.y?.minus(y) ?: yDelta
-            }
-            MotionEvent.ACTION_MOVE -> {
-               view?.animate()?.x(event.rawX + xDelta)?.y(event.rawY + yDelta)?.setDuration(0)?.start()
-            }
-            else -> { return false}
-        }
-        return true
     }
 }

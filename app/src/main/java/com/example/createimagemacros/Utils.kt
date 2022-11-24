@@ -14,8 +14,8 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random
 
-// Retrieving the url to share
- fun getImageToShare(bitmap: Bitmap, context: Context): Uri? {
+// Retrieving the url from bitmap to share
+ fun getImageUrlToShare(bitmap: Bitmap, context: Context): Uri? {
     val imagefolder = File(context.cacheDir, "images")
     var uri: Uri? = null
     try {
@@ -33,7 +33,7 @@ import kotlin.random.Random
     return uri
 }
 
-// change random background color
+// change random background color for view
  fun changeBackGroundColor(view:View) {
     val random = Random
     val color = Color.argb(255, random.nextInt(256), random.nextInt(256),
