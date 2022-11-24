@@ -1,20 +1,25 @@
 package com.example.createimagemacros.view
 
-import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
-import android.graphics.Color
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
-import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
 import android.view.View
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.example.createimagemacros.changeBackGroundColor
 import com.example.createimagemacros.databinding.ActivityMainBinding
-import kotlin.random.Random
-
+import com.example.createimagemacros.getBitmapFromView
+import com.example.createimagemacros.getImageToShare
 
 class MainActivity : AppCompatActivity(),View.OnTouchListener {
     private lateinit var binding: ActivityMainBinding
@@ -22,25 +27,29 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
     private var xDelta:Float = 0.0F
     private var yDelta:Float = 0.0F
     private var mScaleGestureDetector: ScaleGestureDetector? = null
-    private var mScaleFactor = 1.0f
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        mScaleGestureDetector = ScaleGestureDetector(this, ScaleListener())
+        val builder = VmPolicy.Builder()
+        StrictMode.setVmPolicy(builder.build())
+        
+        val resultLauncher = registerForActivityResult()
 
-        binding.selectImageButton.setOnClickListener { imageChooser() }
+        binding.marocsImage.setOnTouchListener(this)
+        mScaleGestureDetector = ScaleGestureDetector(this, ScalingView(binding.marocsImage))
 
-        binding.changeBackgroundButton.setOnClickListener { changeBackGroundColor() }
+        binding.selectImageButton.setOnClickListener { imageChooser(resultLauncher) }
+
+        binding.changeBackgroundButton.setOnClickListener { changeBackGroundColor(binding.root) }
 
         binding.marocsText.addTextChangedListener( object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 Log.d("vartika", "text changes afterText")
 
-                addTouchListner()
+                addTouchListener()
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -59,35 +68,58 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
             binding.marocsText.visibility = View.VISIBLE
             binding.marocsText.requestFocus()
         }
-        binding.marocsImage.setOnTouchListener(this)
 
+        binding.shareButton.setOnClickListener {
+            val bitmap = getBitmapFromView(binding.macros)
+            shareImageAndText(bitmap)
+        }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private fun addTouchListner() {
+    private fun registerForActivityResult() = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // There are no request codes
+            onActivityResult(SELECT_PICTURE, result)
+        }
+    }
+
+    private fun addTouchListener() {
         binding.marocsText.setOnTouchListener(this)
         binding.marocsText.clearFocus()
     }
 
-    // change random background color
-    private fun changeBackGroundColor() {
-        val random = Random
-        val color = Color.argb(255, random.nextInt(256), random.nextInt(256),
-            random.nextInt(256))
-        binding.root.setBackgroundColor(color)
-    }
-
     // select image from gallery
-    private fun imageChooser() {
+    private fun imageChooser(resultLauncher: ActivityResultLauncher<Intent>) {
         val intent = Intent()
         intent.type = "image/*"
         intent.action = Intent.ACTION_GET_CONTENT
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);
+
+        resultLauncher.launch(intent)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        super.onActivityResult(requestCode, resultCode, intent)
-           if (resultCode == RESULT_OK) {
+    private fun shareImageAndText(bitmap: Bitmap) {
+        val uri = getImageToShare(bitmap, this)
+        val intent = Intent(Intent.ACTION_SEND)
+
+        // putting uri of image to be shared
+        intent.putExtra(Intent.EXTRA_STREAM, uri)
+
+        // adding text to share
+        intent.putExtra(Intent.EXTRA_TEXT, "Sharing Image")
+
+        // Add subject Here
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
+
+        // setting type to image
+        intent.type = "image/png"
+
+        val chooser = Intent.createChooser(intent, "Chooser Title")
+        chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        startActivity(chooser)
+    }
+
+     fun onActivityResult(requestCode: Int, result: ActivityResult) {
+           if (result.resultCode == RESULT_OK) {
+               val intent = result.data
                if (requestCode == SELECT_PICTURE) {
                    val selectImageUri = intent?.data
                    selectImageUri?.let {
@@ -97,7 +129,6 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
            }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View?, event: MotionEvent?): Boolean {
         if (event != null) {
             mScaleGestureDetector?.onTouchEvent(event)
@@ -118,15 +149,5 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
             else -> { return false}
         }
         return true
-    }
-
-    inner class ScaleListener : SimpleOnScaleGestureListener() {
-        // when a scale gesture is detected, use it to resize the image
-        override fun onScale(scaleGestureDetector: ScaleGestureDetector): Boolean {
-            mScaleFactor *= scaleGestureDetector.scaleFactor
-            binding.marocsImage.setScaleX(mScaleFactor)
-            binding.marocsImage.setScaleY(mScaleFactor)
-            return true
-        }
     }
 }

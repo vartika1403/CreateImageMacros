@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">CreateImageMacros</string>
+    <string name="background_color">B</string>
+    <string name="add_image">I</string>
+    <string name="add_text">T</string>
+    <string name="share_macros">Share</string>
+    <string name="type_text">type text</string>
 </resources>
