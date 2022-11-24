@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.net.Uri
+import android.os.StrictMode
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -40,6 +41,7 @@ import kotlin.random.Random
     view.setBackgroundColor(color)
 }
 
+// retrieve bitmap from view
 fun getBitmapFromView(view: View): Bitmap {
     val bitmap = Bitmap.createBitmap(
         view.width, view.height, Bitmap.Config.ARGB_8888
@@ -49,3 +51,8 @@ fun getBitmapFromView(view: View): Bitmap {
     return bitmap
 }
 
+// add strict mode
+fun addStrictMode() {
+    val builder = StrictMode.VmPolicy.Builder()
+    StrictMode.setVmPolicy(builder.build())
+}

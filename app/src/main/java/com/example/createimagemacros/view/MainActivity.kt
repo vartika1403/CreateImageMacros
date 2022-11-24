@@ -4,18 +4,17 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.os.StrictMode
-import android.os.StrictMode.VmPolicy
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import android.widget.EditText
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.example.createimagemacros.addStrictMode
 import com.example.createimagemacros.changeBackGroundColor
 import com.example.createimagemacros.databinding.ActivityMainBinding
 import com.example.createimagemacros.getBitmapFromView
@@ -26,43 +25,25 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
     private val SELECT_PICTURE = 200
     private var xDelta:Float = 0.0F
     private var yDelta:Float = 0.0F
-    private var mScaleGestureDetector: ScaleGestureDetector? = null
+    private var scaleGestureDetector: ScaleGestureDetector? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val builder = VmPolicy.Builder()
-        StrictMode.setVmPolicy(builder.build())
+        addStrictMode()
         
         val resultLauncher = registerForActivityResult()
 
         binding.marocsImage.setOnTouchListener(this)
-        mScaleGestureDetector = ScaleGestureDetector(this, ScalingView(binding.marocsImage))
+        scaleGestureDetector = ScaleGestureDetector(this, ScalingView(binding.marocsImage))
 
         binding.selectImageButton.setOnClickListener { imageChooser(resultLauncher) }
 
         binding.changeBackgroundButton.setOnClickListener { changeBackGroundColor(binding.root) }
 
-        binding.marocsText.addTextChangedListener( object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                Log.d("vartika", "text changes afterText")
-
-                addTouchListener()
-            }
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                Log.d("vartika", "text changes beforeText")
-                binding.marocsText.setBackgroundResource(android.R.color.black);
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                Log.d("vartika", "text changes onText")
-                binding.marocsText.setBackgroundResource(android.R.color.transparent);
-
-            }
-        })
+        addTextChangedListener(binding.marocsText)
 
         binding.editTextButton.setOnClickListener {
             binding.marocsText.visibility = View.VISIBLE
@@ -73,6 +54,22 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
             val bitmap = getBitmapFromView(binding.macros)
             shareImageAndText(bitmap)
         }
+    }
+
+    private fun addTextChangedListener(editText: EditText) {
+        editText.addTextChangedListener( object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                addTouchListener()
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                editText.setBackgroundResource(android.R.color.black);
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                editText.setBackgroundResource(android.R.color.transparent);
+            }
+        })
     }
 
     private fun registerForActivityResult() = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -96,6 +93,7 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
         resultLauncher.launch(intent)
     }
 
+    // add sharing component for the macrosImage
     private fun shareImageAndText(bitmap: Bitmap) {
         val uri = getImageToShare(bitmap, this)
         val intent = Intent(Intent.ACTION_SEND)
@@ -131,7 +129,7 @@ class MainActivity : AppCompatActivity(),View.OnTouchListener {
 
     override fun onTouch(view: View?, event: MotionEvent?): Boolean {
         if (event != null) {
-            mScaleGestureDetector?.onTouchEvent(event)
+            scaleGestureDetector?.onTouchEvent(event)
         }
         val x = event?.rawX?.toInt()
         val y = event?.rawY?.toInt()
